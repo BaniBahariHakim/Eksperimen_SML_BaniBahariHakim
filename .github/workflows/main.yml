@@ -1,0 +1,44 @@
+name: Automated Preprocessing
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  preprocess-data:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python 3.12.7
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12.7'
+
+      - name: Install dependencies
+        run: pip install pandas scikit-learn
+
+      - name: Download raw data
+        run: |
+          if [ ! -f winequality-red.csv ]; then
+            wget https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-red.csv
+          fi
+          mv winequality-red.csv winequality_raw.csv
+
+      - name: Run preprocessing script
+        run: |
+          python automate_BaniBahariHakim.py winequality_raw.csv winequality_preprocessing.csv
+
+      - name: Commit processed dataset ke repository
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add winequality_preprocessing.csv winequality_raw.csv
+          git commit -m "Dataset" || echo "No changes to commit"
+          git push
